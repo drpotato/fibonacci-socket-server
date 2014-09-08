@@ -13,13 +13,15 @@ SCP: Sequence Computation Protocol
 Description:
     SCP is a means for remote computation of sequence calculations. SCP uses JSON encoding over TCP to ensure
     reliable transmission of information. While the task at hand only requires calculating fibonacci numbers, it can be
-    easily expanded to computer other integer sequences.
+    easily expanded to compute other number sequences.
 
 Notes:
     After having a look at the HTTP specification, I considered changing the protocol message structure to something
-    more closely resembling the HTTP messaging structure. However, the convenience of json when developing in python is
-    too desirable for such a small project. I will however, make the system a little more flexible/extensible.
-    If I were to move it to a HTTP inspired format it would look like this:
+    more closely resembling the HTTP messaging structure. However, the convenience of JSON when developing in python is
+    too desirable for such a small project. I will however, make the system a little more flexible/extensible after some
+    research
+    .
+    If I were to move it to a HTTP inspired structure it would look like this:
 
     Request Template:
         <METHOD> <SEQUENCE_NUMBER> SCP/<VERSION>
