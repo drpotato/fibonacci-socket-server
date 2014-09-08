@@ -52,7 +52,7 @@ Status Codes:
 """
 
 
-class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandler):
+class SCPHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandler):
     """
     Socket request handler to calculate the fibonacci number for a given value.
     """
@@ -149,7 +149,7 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
         elif n == 1:
             return 1
         else:
-            return FibonacciHandler.fib(n - 1) + FibonacciHandler.fib(n - 2)
+            return SCPHandler.fib(n - 1) + SCPHandler.fib(n - 2)
 
     @staticmethod
     def fib_memoized(n, done={0: 0, 1: 1}):
@@ -163,14 +163,14 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
         :return: the fibonacci number for a given index
         """
         if n not in done:
-            done[n] = FibonacciHandler.fib_memoized(n - 1) + FibonacciHandler.fib_memoized(n - 2)
+            done[n] = SCPHandler.fib_memoized(n - 1) + SCPHandler.fib_memoized(n - 2)
         return done[n]
 
 if __name__ == "__main__":
 
     # Bind the server to localhost on port 12345.
     # TCP is used to ensure the transmission is reliable.
-    server = socketserver.TCPServer(('localhost', 12345), FibonacciHandler)
+    server = socketserver.TCPServer(('localhost', 12345), SCPHandler)
 
     # Start a thread to handle the requests.
     server_thread = threading.Thread(target=server.serve_forever)
