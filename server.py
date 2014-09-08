@@ -49,6 +49,7 @@ Status Codes:
     401: Invalid data type.
     402: Out of sequence range.
     501: Not yet implemented.
+    502: Could not compute.
 """
 
 
@@ -61,7 +62,8 @@ class SCPHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandler):
         200: 'Success',
         401: 'Invalid data type',
         402: 'Out of sequence range',
-        501: 'Not yet implemented'
+        501: 'Not yet implemented',
+        502: 'Could not compute'
     }
 
     def handle(self):
@@ -92,15 +94,22 @@ class SCPHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandler):
                     return
 
                 # Calculate the fibonacci number.
-                computed_value = self.fib(value)
-                self.success(200, computed_value, time.time() - start_time)
+                try:
+                    computed_value = self.fib_memoized(value)
+                    self.success(200, computed_value, time.time() - start_time)
+                except RuntimeError:
+                    # This will happen if the recursion limit is hit. Fail gracefully
+                    self.failure(502)
+                    return
 
             else:
                 # Invalid method requested.
                 self.failure(501)
+                return
         else:
             # Invalid version number.
             self.failure(501)
+            return
 
     def success(self, status_code, computed_value, computation_time):
         """
