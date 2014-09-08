@@ -3,6 +3,7 @@
 __author__ = 'Chris Morgan'
 
 import sys
+import json
 import socket
 
 # Grab the value from the command line arguments
@@ -15,13 +16,17 @@ try:
     # Connect to server and send data
     sock.connect(('localhost', 12345))
 
+    fcp_request = {
+        'sequence_number': value
+    }
+
     # Send the data through the socket.
-    sock.sendall(value.encode())
+    sock.sendall(json.dumps(fcp_request).encode())
 
     # Receive data from the server and shut down
     received = sock.recv(1024).decode()
 
-    # Display revieved information.
+    # Display received information.
     print(received)
 
 

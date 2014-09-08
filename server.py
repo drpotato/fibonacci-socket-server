@@ -2,10 +2,13 @@
 
 __author__ = 'Chris Morgan'
 
+import json
 import threading
 import socketserver
 
 """
+FCP: Fibonacci Computation Protocol
+
 Request Template:
     {
         sequence_number: <SEQUENCE_NUMBER>,
@@ -18,6 +21,7 @@ Response Template:
     }
 """
 
+
 class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandler):
     """
     Socket request handler to calculate the fibonacci number for a given value.
@@ -28,14 +32,22 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
         # Receive data
         data = self.request.recv(1024).decode()
 
+        # Build a json object from the data.
+        request = json.loads(data)
+
         # Convert it to an integer.
-        value = int(data)
+        value = int(request['sequence_number'])
 
         # Calculate the fibonacci number.
-        result = self.fib(value)
+        computed_value = self.fib(value)
+
+        result = {
+            'status': 'success',
+            'computed_value': computed_value
+        }
 
         # Encode the result in a binary string and send the result back to the client.
-        self.request.sendall(str(result).encode())
+        self.request.sendall(json.dumps(result).encode())
 
     @staticmethod
     def fib(n):
