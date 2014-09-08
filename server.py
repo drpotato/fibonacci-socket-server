@@ -7,10 +7,25 @@ import threading
 import socketserver
 
 """
-FCP: Fibonacci Computation Protocol
+SCP: Sequence Computation Protocol
+
+
+Notes:
+    After having a look at the HTTP specification, I considered changing the protocol message structure to something
+    more closely resembling the HTTP messaging structure. However, the convenience of json when developing in python is
+    too desirable for such a small project. I will however, make the system a little more flexible/extensible.
+    If I were to move it to a HTTP inspired format it would look like this:
+    Request Template:
+        <METHOD> <SEQUENCE_NUMBER> SCP/<VERSION>
+
+    Response Template:
+    SCP/<VERSION> <STATUS_CODE> <STATUS_MESSAGE>
 
 Request Template:
     {
+        protocol: SCP,
+        version: <VERSION>
+        method: <METHOD>,
         sequence_number: <SEQUENCE_NUMBER>,
     }
 
@@ -23,7 +38,9 @@ Response Template:
 
 Status Codes:
     200: Success.
-    400: Invalid data received.
+    401: Invalid data type.
+    402: Out of sequence range.
+    501: Not yet implemented.
 """
 
 
@@ -31,6 +48,13 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
     """
     Socket request handler to calculate the fibonacci number for a given value.
     """
+
+    _status_codes = {
+        200: 'Success',
+        401: 'Invalid data type',
+        402: 'Out of sequence range',
+        501: 'Not yet implemented'
+    }
 
     def handle(self):
 
@@ -45,26 +69,32 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
             value = int(request['sequence_number'])
         except ValueError:
             # The data provided wasn't an integer,
-            result = {
-                'status': 'failure'
-            }
-            self.failure(400)
+            self.failure(401)
             return
 
-        if value < 0:
-            # Prevent hitting recursion limit and failing for an invalid number.
-            self.failure(400)
-            return
+        if request['version'] == '1.0':
 
-        # Calculate the fibonacci number.
-        computed_value = self.fib(value)
+            if request['method'] == 'fibonacci':
 
-        self.success(value)
+                if value < 0:
+                    # Prevent hitting recursion limit and failing for an invalid number.
+                    self.failure(402)
+                    return
 
-    def success(self, computed_value):
+                # Calculate the fibonacci number.
+                computed_value = self.fib(value)
+
+                self.success(200, computed_value)
+
+            else:
+                self.failure(501)
+        else:
+            self.failure(501)
+
+    def success(self, status_code, computed_value):
         result = {
-            'status': 'success',
-            'return_code': 200,
+            'status': self._status_codes[status_code],
+            'status_code': status_code,
             'computed_value': computed_value
         }
         # Encode the result in a binary string and send the result back to the client.
@@ -72,7 +102,7 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
 
     def failure(self, status_code):
         result = {
-            'status': 'failure',
+            'status': self._status_codes[status_code],
             'status_code': status_code
         }
         self.request.sendall(json.dumps(result).encode())

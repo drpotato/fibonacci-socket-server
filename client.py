@@ -16,12 +16,15 @@ try:
     # Connect to server and send data
     sock.connect(('localhost', 12345))
 
-    fcp_request = {
+    scp_request = {
+        'protocol': 'SCP',
+        'version': '1.0',
+        'method': 'fibonacci',
         'sequence_number': value
     }
 
     # Send the data through the socket.
-    sock.sendall(json.dumps(fcp_request).encode())
+    sock.sendall(json.dumps(scp_request).encode())
 
     # Receive data from the server and shut down
     received = sock.recv(1024).decode()
