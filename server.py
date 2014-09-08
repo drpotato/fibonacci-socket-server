@@ -17,8 +17,13 @@ Request Template:
 Response Template:
     {
         status: <STATUS>,
+        code: <STATUS_CODE>,
         computed_value: <COMPUTED_VALUE>
     }
+
+Status Codes:
+    200: Success.
+    400: Invalid data received.
 """
 
 
@@ -43,12 +48,12 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
             result = {
                 'status': 'failure'
             }
-            self.failure()
+            self.failure(400)
             return
 
         if value < 0:
             # Prevent hitting recursion limit and failing for an invalid number.
-            self.failure()
+            self.failure(400)
             return
 
         # Calculate the fibonacci number.
@@ -59,14 +64,16 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
     def success(self, computed_value):
         result = {
             'status': 'success',
+            'return_code': 200,
             'computed_value': computed_value
         }
         # Encode the result in a binary string and send the result back to the client.
         self.request.sendall(json.dumps(result).encode())
 
-    def failure(self):
+    def failure(self, status_code):
         result = {
-            'status': 'failure'
+            'status': 'failure',
+            'status_code': status_code
         }
         self.request.sendall(json.dumps(result).encode())
 
