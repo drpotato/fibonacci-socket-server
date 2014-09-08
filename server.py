@@ -35,8 +35,16 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
         # Build a json object from the data.
         request = json.loads(data)
 
-        # Convert it to an integer.
-        value = int(request['sequence_number'])
+        try:
+            # Convert it to an integer.
+            value = int(request['sequence_number'])
+        except ValueError:
+            # The data provided wasn't an integer,
+            result = {
+                'status': 'failure'
+            }
+            self.request.sendall(json.dumps(result).encode())
+            return
 
         # Calculate the fibonacci number.
         computed_value = self.fib(value)
