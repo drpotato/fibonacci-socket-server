@@ -95,7 +95,7 @@ class SCPHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandler):
 
                 # Calculate the fibonacci number.
                 try:
-                    computed_value = self.fib_memoized(value)
+                    computed_value = self.fib(value)
                     self.success(200, computed_value, time.time() - start_time)
                 except RuntimeError:
                     # This will happen if the recursion limit is hit. Fail gracefully
@@ -182,6 +182,7 @@ if __name__ == "__main__":
     server = socketserver.TCPServer(('localhost', 12345), SCPHandler)
 
     # Start a thread to handle the requests.
+    # A new thread is started every time a request comes in.
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.daemon = True
     server_thread.start()
