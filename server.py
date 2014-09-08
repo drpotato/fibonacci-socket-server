@@ -3,23 +3,31 @@
 __author__ = 'Chris Morgan'
 
 import json
+import time
 import threading
 import socketserver
 
 """
 SCP: Sequence Computation Protocol
 
+Description:
+    SCP is a means for remote computation of sequence calculations. SCP uses JSON encoding over TCP to ensure
+    reliable transmission of information. While the task at hand only requires calculating fibonacci numbers, it can be
+    easily expanded to computer other integer sequences.
 
 Notes:
     After having a look at the HTTP specification, I considered changing the protocol message structure to something
     more closely resembling the HTTP messaging structure. However, the convenience of json when developing in python is
     too desirable for such a small project. I will however, make the system a little more flexible/extensible.
     If I were to move it to a HTTP inspired format it would look like this:
+
     Request Template:
         <METHOD> <SEQUENCE_NUMBER> SCP/<VERSION>
 
     Response Template:
-    SCP/<VERSION> <STATUS_CODE> <STATUS_MESSAGE>
+        SCP/<VERSION> <STATUS_CODE> <STATUS_MESSAGE>
+
+        <COMPUTED_VALUE>
 
 Request Template:
     {
@@ -72,8 +80,10 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
             self.failure(401)
             return
 
-        if request['version'] == '1.0':
+        # To time the computation, take a timestamp before we begin.
+        start_time = time.time()
 
+        if request['version'] == '1.0':
             if request['method'] == 'fibonacci':
 
                 if value < 0:
@@ -83,29 +93,32 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
 
                 # Calculate the fibonacci number.
                 computed_value = self.fib(value)
-
-                self.success(200, computed_value)
+                self.success(200, computed_value, time.time() - start_time)
 
             else:
+                # Invalid method requested.
                 self.failure(501)
         else:
+            # Invalid version number.
             self.failure(501)
 
-    def success(self, status_code, computed_value):
+    def success(self, status_code, computed_value, computation_time):
         result = {
             'status': self._status_codes[status_code],
             'status_code': status_code,
-            'computed_value': computed_value
+            'computed_value': computed_value,
+            'computation_time': '%.4fs' % computation_time
         }
         # Encode the result in a binary string and send the result back to the client.
-        self.request.sendall(json.dumps(result).encode())
+        self.request.sendall(json.dumps(result, indent=4).encode())
 
     def failure(self, status_code):
         result = {
             'status': self._status_codes[status_code],
             'status_code': status_code
         }
-        self.request.sendall(json.dumps(result).encode())
+        # Encode the result in a binary string and send the result back to the client.
+        self.request.sendall(json.dumps(result, indent=4).encode())
 
     @staticmethod
     def fib(n):
