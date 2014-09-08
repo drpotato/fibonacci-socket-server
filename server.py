@@ -43,26 +43,31 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
             result = {
                 'status': 'failure'
             }
-            self.request.sendall(json.dumps(result).encode())
+            self.failure()
             return
 
         if value < 0:
             # Prevent hitting recursion limit and failing for an invalid number.
-            result = {
-                'status': 'failure'
-            }
-            self.request.sendall(json.dumps(result).encode())
+            self.failure()
             return
 
         # Calculate the fibonacci number.
         computed_value = self.fib(value)
 
+        self.success(value)
+
+    def success(self, computed_value):
         result = {
             'status': 'success',
             'computed_value': computed_value
         }
-
         # Encode the result in a binary string and send the result back to the client.
+        self.request.sendall(json.dumps(result).encode())
+
+    def failure(self):
+        result = {
+            'status': 'failure'
+        }
         self.request.sendall(json.dumps(result).encode())
 
     @staticmethod
