@@ -2,17 +2,30 @@
 
 __author__ = 'Chris Morgan'
 
+import threading
 import socketserver
 
+"""
+Request Template:
+    {
+        sequence_number: <SEQUENCE_NUMBER>,
+    }
 
-class FibonacciHandler(socketserver.BaseRequestHandler):
+Response Template:
+    {
+        status: <STATUS>,
+        computed_value: <COMPUTED_VALUE>
+    }
+"""
+
+class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandler):
     """
     Socket request handler to calculate the fibonacci number for a given value.
     """
 
     def handle(self):
 
-        # Revieve data
+        # Receive data
         data = self.request.recv(1024).decode()
 
         # Convert it to an integer.
@@ -44,6 +57,11 @@ if __name__ == "__main__":
     # Bind the server to localhost on port 12345.
     # TCP is used to ensure the transmission is reliable.
     server = socketserver.TCPServer(('localhost', 12345), FibonacciHandler)
+
+    # Start a thread to handle the requests.
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.daemon = True
+    server_thread.start()
 
     # Start the server listening.
     try:
