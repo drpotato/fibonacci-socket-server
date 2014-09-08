@@ -103,19 +103,35 @@ class FibonacciHandler(socketserver.ForkingMixIn, socketserver.BaseRequestHandle
             self.failure(501)
 
     def success(self, status_code, computed_value, computation_time):
+        """
+        Generates success message to send back to client.
+        :param status_code: status code for response
+        :param computed_value: value to add to response
+        :param computation_time: time it took to compute value
+        """
         result = {
-            'status': self._status_codes[status_code],
-            'status_code': status_code,
-            'computed_value': computed_value,
-            'computation_time': '%.4fs' % computation_time
+            'header': {
+                'status': self._status_codes[status_code],
+                'status_code': status_code,
+                'computation_time': '%.4fs' % computation_time
+            },
+            'data': {
+                'computed_value': computed_value
+            }
         }
         # Encode the result in a binary string and send the result back to the client.
         self.request.sendall(json.dumps(result, indent=4).encode())
 
     def failure(self, status_code):
+        """
+        Generates failure message to send back to client.
+        :param status_code: status code to return to client
+        """
         result = {
-            'status': self._status_codes[status_code],
-            'status_code': status_code
+            'header': {
+                'status': self._status_codes[status_code],
+                'status_code': status_code,
+            }
         }
         # Encode the result in a binary string and send the result back to the client.
         self.request.sendall(json.dumps(result, indent=4).encode())
